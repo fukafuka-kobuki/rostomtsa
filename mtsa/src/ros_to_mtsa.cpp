@@ -47,7 +47,7 @@ namespace Ros_to_Mtsa{
     geometry_msgs::PoseStamped goal_e;
     geometry_msgs::PoseStamped goal_m;
     geometry_msgs::PoseStamped goal_w;
-    int pos,p_detect  ;    
+    int pos,p_detect;    
 
     ROSToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
@@ -70,7 +70,7 @@ namespace Ros_to_Mtsa{
       if(result == -1) ERROR("oops : client1");
 
 
-      ROS_INFO("goal initialize");
+      //        ROS_INFO("goal initialize");
       //ゴール　東
       goal_e.header.frame_id = "map";
       goal_e.pose.position.x = 5.0;

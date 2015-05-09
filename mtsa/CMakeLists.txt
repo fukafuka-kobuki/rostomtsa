@@ -68,7 +68,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   std_msgs
 # )
 
 ###################################
@@ -82,8 +82,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES tutorial
-#  CATKIN_DEPENDS other_catkin_pkg
+#  LIBRARIES mtsa
+#  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
 
@@ -94,13 +94,17 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
-# add_library(tutorial
-#   src/${PROJECT_NAME}/tutorial.cpp
+# add_library(mtsa
+#   src/${PROJECT_NAME}/mtsa.cpp
 # )
 
 ## Declare a cpp executable
+# add_executable(mtsa_node src/mtsa_node.cpp)
  add_executable(goal_pub src/goal_pub.cpp)
  add_executable(sample src/sample.cpp) 
  add_executable(sampleclient src/sample_client.cpp)
@@ -109,11 +113,16 @@ catkin_package(
  add_executable(goal_arrive src/goal_arrive.cpp)
  add_executable(ros_to_mtsa src/ros_to_mtsa.cpp)
 
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
- add_dependencies(goal_pub tutorial_generate_messages_cpp)
+# add_dependencies(mtsa_node mtsa_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
+# target_link_libraries(mtsa_node
+#   ${catkin_LIBRARIES}
+# )
+
  target_link_libraries(goal_pub
    ${catkin_LIBRARIES}
  )
@@ -136,7 +145,6 @@ target_link_libraries(ros_to_mtsa
   ${catkin_LIBRARIES}
 )
 
-
 #############
 ## Install ##
 #############
@@ -152,7 +160,7 @@ target_link_libraries(ros_to_mtsa
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS tutorial tutorial_node
+# install(TARGETS mtsa mtsa_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -177,7 +185,7 @@ target_link_libraries(ros_to_mtsa
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_tutorial.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_mtsa.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
