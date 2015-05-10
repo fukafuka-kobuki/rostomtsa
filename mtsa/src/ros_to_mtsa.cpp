@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/Twist.h"
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -30,10 +31,13 @@ namespace Ros_to_Mtsa{
     ros::Publisher goal_pub;
     ros::Subscriber arrive_sub;
     ros::Subscriber bump_sub;
+    ros::Subscriber vel_sub;
+
     void subscriber_init();
     void publisher_init();
     void arrive_callback(const std_msgs::String msg);
     void bump_callback(const std_msgs::String msg);
+    void vel_callback(const geometry_msgs::Twist twist);
     void arrive_detect();
     void bump_detect();
     
@@ -47,13 +51,13 @@ namespace Ros_to_Mtsa{
     geometry_msgs::PoseStamped goal_e;
     geometry_msgs::PoseStamped goal_m;
     geometry_msgs::PoseStamped goal_w;
-    int pos,p_detect;    
+    int pos,p_detect,a_detect;    
 
     ROSToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
     {
       ROS_INFO("ROSToMTSA constructer in");
-      com=0, p_detect   = 0;
+      com=0, p_detect= 0, a_detect = 0;
 
       printf("command [%d] is sent!\n",com);
       /*クライアント用ソケット作成*/
@@ -69,6 +73,8 @@ namespace Ros_to_Mtsa{
       result = connect(sockfd, (struct sockaddr *)&address, len);
       if(result == -1) ERROR("oops : client1");
 
+      com = 3;
+      write(sockfd, &com, 1);
 
       //        ROS_INFO("goal initialize");
       //ゴール　東
@@ -130,6 +136,7 @@ namespace Ros_to_Mtsa{
     //  r.sleep();
     
   }
+
   void ROSToMTSA::bump_callback(const std_msgs::String msg)
   {
     //    ROS_INFO("bump_callback in!;%s ",msg);
@@ -141,12 +148,23 @@ namespace Ros_to_Mtsa{
     r.sleep();
   }
 
+  void ROSToMTSA::vel_callback(const geometry_msgs::Twist twist)
+  {
+    ROS_INFO("vel_callback in!");
+    if(twist.linear.x == 0.0 && twist.linear.y == 0.0){
+      ROS_INFO("arrive!");
+      a_detect = 1;
+    }
+    ros::Rate r(1);
+    r.sleep();
+  }
+
 
   void ROSToMTSA::subscriber_init(){
     ROS_INFO("subscriber_init");  
     arrive_sub = nh.subscribe("arrive",1000,&ROSToMTSA::arrive_callback,this);
     bump_sub = nh.subscribe("bump",1000,&ROSToMTSA::bump_callback,this);
-
+    vel_sub = nh.subscribe<geometry_msgs::Twist>("/navigation_velocity_smoother/raw_cmd_vel",10,&ROSToMTSA::vel_callback,this);
   }
 
   void ROSToMTSA::publisher_init(){
@@ -184,8 +202,8 @@ namespace Ros_to_Mtsa{
     ros::Rate r(1);
     r.sleep();
 
-    com = 3;
-    write(sockfd, &com, 1);
+    //    com = 3;
+    // write(sockfd, &com, 1);
   
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
@@ -205,7 +223,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move e(go to m) was published");
-	  while(pos != 1){
+	  while(a_detect != 1){
 	    ros::spinOnce();
 	    ROS_INFO("pos; %d", pos);
 	  }
@@ -215,14 +233,15 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_e);	    
 	  ROS_INFO("move e  (go to e)was published");
-	  while(pos != 2){
+	  while(a_detect != 1){
 	    ros::spinOnce();
 	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();
 	} else if(pos ==2){
 	  ROS_INFO("kobuki is already at east");
-	  com = 1;}
+	  com = 1;
+	}
       }else if(com == 1){
 	//西へ移動
 	printf("command move w is received!\n");
@@ -231,7 +250,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move w  was published");
-	  while(pos != 0){
+	  while(a_detect != 1){
 	    ros::spinOnce();
 	    ROS_INFO("pos; %d", pos);
 	  }
@@ -241,7 +260,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_w);
 	  ROS_INFO("move w  was published");
-	  while(pos != 1){
+	  while(a_detect != 1){
 	    ros::spinOnce();
 	    ROS_INFO("pos; %d", pos);
 	  }
@@ -250,7 +269,7 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("kobuki is already at east");
 	  com = 3;
 	}
-      }else if(com== 3){
+      }else if(com == 3){
 	//荷物を持つ
 	ROS_INFO_ONCE("command pickup is received!\n");
 	ros::Rate r(10);
