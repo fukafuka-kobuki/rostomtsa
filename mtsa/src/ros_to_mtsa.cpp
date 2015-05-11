@@ -141,7 +141,13 @@ namespace Ros_to_Mtsa{
     //look the velocity of kobuki and detect its stopping
 
     ROS_INFO("vel_callback in!");
-    if(twist.linear.x == 0.0 && twist.linear.y == 0.0){
+    if(twist.linear.x == 0.0 &&
+       twist.linear.y == 0.0 &&
+       twist.linear.z == 0.0 &&
+       twist.angular.x == 0.0 &&
+       twist.angular.y == 0.0 &&       
+       twist.angular.z == 0.0        
+       ){
       ROS_INFO("arrive!");
       a_detect = 1;
     }
@@ -299,6 +305,7 @@ namespace Ros_to_Mtsa{
 
       //命令の書き込み
       write(sockfd, &com, 1);
+      a_detect = 0;
       /*
 	sent command number is related to Monitorable action
 	1:arrive e
