@@ -61,28 +61,25 @@ namespace ARRIVE_to_MTSA{
     ROS_INFO("arrive_callback in");
     c_odom = msg;
     
-    if(c_odom.pose.pose.position.x >= 3.0 &&
-       c_odom.pose.pose.position.x <=  4.0 &&
-       c_odom.pose.pose.position.y >= 1.5 && 
-       c_odom.pose.pose.position.y <= 2.5){
+    if(c_odom.pose.pose.position.x > 1.5 &&
+       c_odom.pose.pose.position.x <  4.0 &&
+       c_odom.pose.pose.position.y > 1.0 && 
+       c_odom.pose.pose.position.y < 3.0){
       ROS_INFO("pos m");
-      //      ss="m";
       arrive.data = "m";
       arrive_pub.publish(arrive);
-    }else if(c_odom.pose.pose.position.x >= 0.5 &&
+    }else if(c_odom.pose.pose.position.x >= 0.0 &&
 	     c_odom.pose.pose.position.x <= 1.5 &&
 	     c_odom.pose.pose.position.y >= 0.0 && 
 	     c_odom.pose.pose.position.y <= 1.0){
       ROS_INFO("pos w");
-      //    ss="w";
       arrive.data = "w";
       arrive_pub.publish(arrive);
-    }else if(c_odom.pose.pose.position.x >= 4.5 &&
+    }else if(c_odom.pose.pose.position.x >= 4.0 &&
 	     c_odom.pose.pose.position.x <= 5.5 &&
 	     c_odom.pose.pose.position.y >= 3.0 && 
 	     c_odom.pose.pose.position.y <= 4.5){
       ROS_INFO("pos e");
-      //      ss="e";
       arrive.data = "e";
       arrive_pub.publish(arrive);
     }
