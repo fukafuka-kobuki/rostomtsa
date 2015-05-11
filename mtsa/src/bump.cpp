@@ -35,8 +35,7 @@ namespace ROS_to_MTSA{
     void subscriber_init();
     void publisher_init();
   public:
-    int com;  /* argv[1][0]でも可能 */  /* argv[1][0]でも可能 */
-    int pickput_detect;
+    int com, pickput_detect;
     std_msgs::String bump;
     kobuki_msgs::Sound sound;
 
@@ -78,7 +77,6 @@ namespace ROS_to_MTSA{
 
   void BumperToMTSA::bumper_callback(const kobuki_msgs::BumperEvent::ConstPtr msg){
     ROS_INFO("bumper_callback in");
-    //MTSA側に渡す処理
     //sound publish for kobuki
     ros::Rate r(1);
     r.sleep();

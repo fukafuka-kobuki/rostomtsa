@@ -47,21 +47,6 @@ namespace ARRIVE_to_MTSA{
       ROS_INFO("BumperToMTSA");
       
       detect_arrive = 0;
-
-      /*クライアント用ソケット作成*/
-      //      sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-      /*サーバ側と同じ名前でソケットの名前を指定*/
-      // address.sin_family = AF_INET;
-      // address.sin_addr.s_addr = inet_addr("136.187.81.230");
-      // address.sin_port = htons(9999);
-      //  len = sizeof(address);
-
-      /*クライアントのソケットとサーバのソケットの接続*/
-      //   result = connect(sockfd, (struct sockaddr *)&address, len);
-      // if(result == -1) ERROR("oops : client1");
-    
-
     }
     ~ArriveToMTSA(){}
     ros::NodeHandle nh;
@@ -101,17 +86,10 @@ namespace ARRIVE_to_MTSA{
       arrive.data = "e";
       arrive_pub.publish(arrive);
     }
-  
-    //MTSA側に渡す処理
-      //    read(sockfd, &com,2);
-      //  com = 7;
-      //  write(sockfd, &com, 2);
     ROS_INFO("arrive_callback_out");
   }
   void ArriveToMTSA::subscriber_init(){
     ROS_INFO("subscriber_init");
-    //    std::string arrive_topic_name = "navigation_velocity_smoother/raw_cmd_vel";
-    //    arrive_sub = nh.subscribe<geometry_msgs::Twist>(arrive_topic_name,10, &ArriveToMTSA::arrive_callback, this);
     std::string odometry_topic_name = "odom";
     odometry_subscriber = nh.subscribe<nav_msgs::Odometry>(odometry_topic_name, 1,
 							   &ArriveToMTSA::arrive_callback,this);

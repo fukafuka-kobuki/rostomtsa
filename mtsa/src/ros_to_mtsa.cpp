@@ -12,7 +12,7 @@
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include "kobuki_msgs/BumperEvent.h"
+//#include "kobuki_msgs/BumperEvent.h"
 #include "std_msgs/String.h"
 #include <sstream>
 
@@ -42,58 +42,59 @@ namespace Ros_to_Mtsa{
     void bump_detect();
     
   public:
-    int sockfd, len, result;
+    int sockfd, len, result, pos,p_detect,a_detect,com;
     struct sockaddr_in address;
-    int com;
+
     std_msgs::String msgp;
     std::stringstream ss;
-    //    char pos[2];
     geometry_msgs::PoseStamped goal_e;
     geometry_msgs::PoseStamped goal_m;
     geometry_msgs::PoseStamped goal_w;
-    int pos,p_detect,a_detect;    
+      
 
     ROSToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
     {
       ROS_INFO("ROSToMTSA constructer in");
-      com=0, p_detect= 0, a_detect = 0;
 
-      printf("command [%d] is sent!\n",com);
-      /*クライアント用ソケット作成*/
+      //initialize variables
+      com=3, p_detect= 0, a_detect = 0;
+
+      /*create socket for client*/
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
       
-      /*サーバ側と同じ名前でソケットの名前を指定*/
+      /*name the scket same as server socket*/
       address.sin_family = AF_INET;
       address.sin_addr.s_addr = inet_addr("136.187.81.230");
       address.sin_port = htons(9999);
       len = sizeof(address);
       
-      /*クライアントのソケットとサーバのソケットの接続*/
+      /*connect client and server socket*/
       result = connect(sockfd, (struct sockaddr *)&address, len);
       if(result == -1) ERROR("oops : client1");
 
-      com = 3;
-      write(sockfd, &com, 1);
-
-      //        ROS_INFO("goal initialize");
-      //ゴール　東
+      ROS_INFO("goal initialize");
+      //goal east
       goal_e.header.frame_id = "map";
       goal_e.pose.position.x = 5.0;
       goal_e.pose.position.y = 3.5;
       goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
       
-      //ゴール　西
+      //goal west
       goal_w.header.frame_id = "map";
       goal_w.pose.position.x = 1.0;
       goal_w.pose.position.y = 0.0;
       goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
-      //ゴール　中間地点
+      //goal middle
       goal_m.header.frame_id = "map";
       goal_m.pose.position.x = 3.0;
       goal_m.pose.position.y = 2.0;
       goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+
+      ROS_INFO("send: arrive w");
+      write(sockfd, &com, 1);
 
       ROS_INFO("ROSToMTSA constructer out");
     }
@@ -108,55 +109,43 @@ namespace Ros_to_Mtsa{
   
   void ROSToMTSA::arrive_callback(const std_msgs::String msg)
   {
-    //     ROS_INFO("arrive_callback in!;%s ",msg);
+    //localization reasoning the topic published by "goal_arrive node"
 
-    //    if(msg->data.c_str() == "m"){
-    //   ROS_INFO("middle!");
-    //  pos = 1;
-    // }else if(msg -> data.c_str() == "e"){
-    //  ROS_INFO("east!");
-    // pos = 2;
-    // }else if(msg -> data.c_str() == "w"|| msg.data == "w"){
-    // ROS_INFO("west!");
-    // pos = 0;
-    //}
-    //  ros::Rate r(1);
-    //r.sleep();
     if(msg.data == "m"){
-      ROS_INFO("middle!");
+      ROS_INFO("Kobuki arrives at middle!");
       pos = 1;
     }else if(msg.data == "e"){
-      ROS_INFO("east!");
+      ROS_INFO("Kobuki arrives at east!");
       pos = 2;
     }else if(msg.data == "w"){
-      ROS_INFO("west!");
+      ROS_INFO("Kobuki arrives at west!");
       pos = 0;
-    }
-    //  ros::Rate r(1);
-    //  r.sleep();
-    
+    }    
   }
 
   void ROSToMTSA::bump_callback(const std_msgs::String msg)
   {
-    //    ROS_INFO("bump_callback in!;%s ",msg);
+    //detect bumper was kicked reasoning the topic pubrished by "bump_to_mtsa"
+
+    ROS_INFO("bump_callback in!");
     if(msg.data == "b"){
       ROS_INFO("bump!");
       p_detect   = 1;
     }
-    ros::Rate r(1);
-    r.sleep();
+
+    ROS_INFO("bump_callback out!");
   }
 
   void ROSToMTSA::vel_callback(const geometry_msgs::Twist twist)
   {
+    //look the velocity of kobuki and detect its stopping
+
     ROS_INFO("vel_callback in!");
     if(twist.linear.x == 0.0 && twist.linear.y == 0.0){
       ROS_INFO("arrive!");
       a_detect = 1;
     }
-    ros::Rate r(1);
-    r.sleep();
+    ROS_INFO("vel_callback out!");
   }
 
 
@@ -171,7 +160,6 @@ namespace Ros_to_Mtsa{
     ROS_INFO("publisher_init");
     pickput_pub = nh.advertise<std_msgs::String>("chatter",1000);
 
-    //目的地の設定
     std::string goal_topic_name = "/move_base_simple/goal";
     goal_pub = nh.advertise<geometry_msgs::PoseStamped>(goal_topic_name.c_str(), 1);
   }
@@ -209,15 +197,23 @@ namespace Ros_to_Mtsa{
       //   printf("Kobuki is at position %d !\n", pos);
       //  printf("server waiting\n");
 
-      /*client_sockfdを介してクライアントに対する読み書きができるようになる*/
+      /*become being able to weite or read thorough client_sockfd*/
       read(sockfd, &com,1);
-            printf("command [%d] is received!\n", com);
+      printf("command [%d] is received!\n", com);
       com = com-47;
       printf("command [%d] is received!\n", com);
 
+      /*
+	received command number is related to Controllable action
+	1:move w
+	2:move e
+	3:pickup
+	4:putdown
+       */
+
       if(com == 2){
 	ROS_INFO("command move e is received!\n");
-	//東へ移動
+	//receive move e
 	if(pos == 0){
 	  ros::Rate r(1);
 	  r.sleep();
@@ -302,10 +298,20 @@ namespace Ros_to_Mtsa{
       }
 
       //命令の書き込み
-      write(sockfd, &com, 2);
-      //        printf("Kobuki is at position %c\n",pos[0]);
-      //	ROS_INFO_ONCE("Kobuki is at position %c", pos[0]);
-      //	ROS_INFO_ONCE("command number %d is sent to MTSA!\n",com);
+      write(sockfd, &com, 1);
+      /*
+	sent command number is related to Monitorable action
+	1:arrive e
+	2:arrive m
+	3:arrive w
+	4:picksuccess
+	5:pickfail
+	6:putsuccess
+	7:putfail
+       */
+
+
+      ROS_INFO_ONCE("command number %d is sent to MTSA!\n",com);
     }
     close(sockfd); 
   }
