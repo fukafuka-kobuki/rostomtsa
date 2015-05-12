@@ -93,8 +93,6 @@ namespace Ros_to_Mtsa{
       goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
 
-      ROS_INFO("send: arrive w");
-      write(sockfd, &com, 1);
 
       ROS_INFO("ROSToMTSA constructer out");
     }
@@ -133,14 +131,14 @@ namespace Ros_to_Mtsa{
       p_detect   = 1;
     }
 
-    ROS_INFO("bump_callback out!");
+        ROS_INFO("bump_callback out!");
   }
 
   void ROSToMTSA::vel_callback(const geometry_msgs::Twist twist)
   {
     //look the velocity of kobuki and detect its stopping
 
-    ROS_INFO("vel_callback in!");
+    //    ROS_INFO("vel_callback in!");
     if(twist.linear.x == 0.0 &&
        twist.linear.y == 0.0 &&
        twist.linear.z == 0.0 &&
@@ -151,7 +149,7 @@ namespace Ros_to_Mtsa{
       ROS_INFO("arrive!");
       a_detect = 1;
     }
-    ROS_INFO("vel_callback out!");
+    //    ROS_INFO("vel_callback out!");
   }
 
 
@@ -198,15 +196,22 @@ namespace Ros_to_Mtsa{
 
     //    com = 3;
     // write(sockfd, &com, 1);
+      ROS_INFO("send: arrive w");
+      write(sockfd, &com, 1);
+
+
   
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
-      //  printf("server waiting\n");
 
+
+      printf("server waiting\n");
       /*become being able to weite or read thorough client_sockfd*/
-      read(sockfd, &com,1);
+ 
+     read(sockfd, &com,1);
+
       printf("command [%d] is received!\n", com);
-      com = com-47;
+      com = com-48;
       printf("command [%d] is received!\n", com);
 
       /*
@@ -227,7 +232,7 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("move e(go to m) was published");
 	  while(a_detect != 1){
 	    ros::spinOnce();
-	    ROS_INFO("pos; %d", pos);
+	    //	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();
 	}else if(pos ==1){
@@ -237,7 +242,7 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("move e  (go to e)was published");
 	  while(a_detect != 1){
 	    ros::spinOnce();
-	    ROS_INFO("pos; %d", pos);
+	    //	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();
 	} else if(pos ==2){
@@ -254,7 +259,7 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("move w  was published");
 	  while(a_detect != 1){
 	    ros::spinOnce();
-	    ROS_INFO("pos; %d", pos);
+	    //	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();	     
 	}else if(pos == 2){
@@ -264,7 +269,7 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("move w  was published");
 	  while(a_detect != 1){
 	    ros::spinOnce();
-	    ROS_INFO("pos; %d", pos);
+	    //	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();
 	} else if(pos ==0){
@@ -304,7 +309,7 @@ namespace Ros_to_Mtsa{
       }
 
       //命令の書き込み
-      write(sockfd, &com, 1);
+      write(sockfd, &com, 2);
       a_detect = 0;
       /*
 	sent command number is related to Monitorable action
@@ -320,7 +325,7 @@ namespace Ros_to_Mtsa{
 
       ROS_INFO_ONCE("command number %d is sent to MTSA!\n",com);
     }
-    close(sockfd); 
+    //    close(sockfd); 
   }
 }
 
