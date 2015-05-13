@@ -32,8 +32,8 @@ int main(int argc, char **argv)
 
     /*ソケットに名前をつける(bind)*/
     server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_address.sin_port = 9999;
+    server_address.sin_addr.s_addr = inet_addr("136.187.81.230");
+    server_address.sin_port = htons(9999);
     server_len = sizeof(server_address);
     bind(server_sockfd, (struct sockaddr *) &server_address, server_len);
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
      client_sockfd =
       accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);  
-     int com = 1;
+     int com = 3;
 
     /*sockfdを介して読み書きができるようにする*/
     write(client_sockfd, &com, 2);

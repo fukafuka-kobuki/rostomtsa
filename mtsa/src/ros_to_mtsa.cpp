@@ -15,6 +15,8 @@
 //#include "kobuki_msgs/BumperEvent.h"
 #include "std_msgs/String.h"
 #include <sstream>
+#include <time.h>
+#include "kobuki_msgs/Sound.h"
 
 #define ERROR(x) {				\
     fprintf(stderr, "server - ");		\
@@ -29,6 +31,7 @@ namespace Ros_to_Mtsa{
   private:
     ros::Publisher pickput_pub;
     ros::Publisher goal_pub;
+    ros::Publisher sound_pub;
     ros::Subscriber arrive_sub;
     ros::Subscriber bump_sub;
     ros::Subscriber vel_sub;
@@ -42,7 +45,8 @@ namespace Ros_to_Mtsa{
     void bump_detect();
     
   public:
-    int sockfd, len, result, pos,p_detect,a_detect,com;
+    int sockfd, len, result, pos,pos_b,p_detect,a_detect,com;
+    clock_t time,time_n,c_time;
     struct sockaddr_in address;
 
     std_msgs::String msgp;
@@ -50,7 +54,7 @@ namespace Ros_to_Mtsa{
     geometry_msgs::PoseStamped goal_e;
     geometry_msgs::PoseStamped goal_m;
     geometry_msgs::PoseStamped goal_w;
-      
+    kobuki_msgs::Sound sound;      
 
     ROSToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
@@ -83,7 +87,7 @@ namespace Ros_to_Mtsa{
       //goal west
       goal_w.header.frame_id = "map";
       goal_w.pose.position.x = 1.0;
-      goal_w.pose.position.y = 0.0;
+      goal_w.pose.position.y = 0.5;
       goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
       //goal middle
@@ -110,13 +114,13 @@ namespace Ros_to_Mtsa{
     //localization reasoning the topic published by "goal_arrive node"
 
     if(msg.data == "m"){
-      ROS_INFO("Kobuki arrives at middle!");
+      //      ROS_INFO("Kobuki arrives at middle!");
       pos = 1;
     }else if(msg.data == "e"){
-      ROS_INFO("Kobuki arrives at east!");
+      //  ROS_INFO("Kobuki arrives at east!");
       pos = 2;
     }else if(msg.data == "w"){
-      ROS_INFO("Kobuki arrives at west!");
+      // ROS_INFO("Kobuki arrives at west!");
       pos = 0;
     }    
   }
@@ -128,9 +132,14 @@ namespace Ros_to_Mtsa{
     ROS_INFO("bump_callback in!");
     if(msg.data == "b"){
       ROS_INFO("bump!");
+      ros::Rate r(1);
+      r.sleep();
+      sound.value= 6;
+      sound_pub.publish(sound);
       p_detect   = 1;
-    }
 
+      
+    }
         ROS_INFO("bump_callback out!");
   }
 
@@ -163,9 +172,9 @@ namespace Ros_to_Mtsa{
   void ROSToMTSA::publisher_init(){
     ROS_INFO("publisher_init");
     pickput_pub = nh.advertise<std_msgs::String>("chatter",1000);
-
     std::string goal_topic_name = "/move_base_simple/goal";
     goal_pub = nh.advertise<geometry_msgs::PoseStamped>(goal_topic_name.c_str(), 1);
+    sound_pub = nh.advertise<kobuki_msgs::Sound>("mobile_base/commands/sound",1);
   }
 
   void ROSToMTSA::arrive_detect(){
@@ -200,18 +209,17 @@ namespace Ros_to_Mtsa{
       write(sockfd, &com, 1);
 
 
+      printf("server waiting\n");
+      /*become being able to weite or read thorough client_sockfd*/ 
+     read(sockfd, &com,1);
+
   
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
-
-
-      printf("server waiting\n");
-      /*become being able to weite or read thorough client_sockfd*/
- 
-     read(sockfd, &com,1);
+      a_detect = 0;
 
       printf("command [%d] is received!\n", com);
-      com = com-48;
+      //      com = com-48;
       printf("command [%d] is received!\n", com);
 
       /*
@@ -224,13 +232,14 @@ namespace Ros_to_Mtsa{
 
       if(com == 2){
 	ROS_INFO("command move e is received!\n");
+	pos_b = pos;
 	//receive move e
 	if(pos == 0){
 	  ros::Rate r(1);
 	  r.sleep();
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move e(go to m) was published");
-	  while(a_detect != 1){
+	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
 	  }
@@ -240,7 +249,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_e);	    
 	  ROS_INFO("move e  (go to e)was published");
-	  while(a_detect != 1){
+	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
 	  }
@@ -248,6 +257,8 @@ namespace Ros_to_Mtsa{
 	} else if(pos ==2){
 	  ROS_INFO("kobuki is already at east");
 	  com = 1;
+	  ros::Rate r(10);
+	  r.sleep();
 	}
       }else if(com == 1){
 	//西へ移動
@@ -255,9 +266,9 @@ namespace Ros_to_Mtsa{
 	if(pos == 1){
 	  ros::Rate r(1);
 	  r.sleep();
-	  goal_pub.publish(goal_m);
+	  goal_pub.publish(goal_w);
 	  ROS_INFO("move w  was published");
-	  while(a_detect != 1){
+	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
 	  }
@@ -265,16 +276,18 @@ namespace Ros_to_Mtsa{
 	}else if(pos == 2){
 	  ros::Rate r(1);
 	  r.sleep();
-	  goal_pub.publish(goal_w);
+	  goal_pub.publish(goal_m);
 	  ROS_INFO("move w  was published");
-	  while(a_detect != 1){
+	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
 	  }
 	  arrive_detect();
 	} else if(pos ==0){
-	  ROS_INFO("kobuki is already at east");
+	  ROS_INFO("kobuki is already at west");
 	  com = 3;
+	  ros::Rate r(10);
+	  r.sleep();
 	}
       }else if(com == 3){
 	//荷物を持つ
@@ -284,10 +297,20 @@ namespace Ros_to_Mtsa{
 	msgp.data = "pick";
 	pickput_pub.publish(msgp);
 	ROS_INFO_ONCE("waiting pick succ/fail");
-	ros::spinOnce();
+	time = clock();
+	time_n = clock();
+	while(p_detect == 0){
+	  ros::spinOnce();
+	  time_n = clock();
+	  c_time = time_n - time;
+	  if(c_time >= 10000000){
+	    ROS_INFO("detect pick fail");
+	    break;
+	  }
+	}
 	if(p_detect == 1){
 	  com = 4;
-	  p_detect == 0;
+	  p_detect = 0;
 	}else if(p_detect == 0){
 	  com = 5;
 	}
@@ -299,18 +322,31 @@ namespace Ros_to_Mtsa{
 	msgp.data = "put";
 	pickput_pub.publish(msgp);
 	ROS_INFO_ONCE("waiting pick succ/fail");
+	  time_n = clock();
+	  c_time = time_n - time;
+	  if(c_time >= 10000000){
+	    ROS_INFO("detect pick fail");
 	ros::spinOnce();
+	    break;
+	  }
+
+
 	if(p_detect == 1){
 	  com = 6;
-	  p_detect == 0;
+	  p_detect = 0;
 	}else if(p_detect == 0){
 	  com = 7;
 	}
       }
-
+      ROS_INFO("aiueo");
       //命令の書き込み
       write(sockfd, &com, 2);
-      a_detect = 0;
+      //      ROS_INFO("command number %d is sent to MTSA!",com);
+      printf("server waiting\n");
+      /*become being able to weite or read thorough client_sockfd*/ 
+     read(sockfd, &com,1);
+
+
       /*
 	sent command number is related to Monitorable action
 	1:arrive e
@@ -322,9 +358,8 @@ namespace Ros_to_Mtsa{
 	7:putfail
        */
 
-
-      ROS_INFO_ONCE("command number %d is sent to MTSA!\n",com);
     }
+    ROS_INFO("closed");
     //    close(sockfd); 
   }
 }
