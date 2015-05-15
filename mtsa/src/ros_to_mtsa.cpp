@@ -217,9 +217,8 @@ namespace Ros_to_Mtsa{
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
       a_detect = 0;
-
       printf("command [%d] is received!\n", com);
-      //      com = com-48;
+      com = com-48;
       printf("command [%d] is received!\n", com);
 
       /*
@@ -238,7 +237,8 @@ namespace Ros_to_Mtsa{
 	  ros::Rate r(1);
 	  r.sleep();
 	  goal_pub.publish(goal_m);
-	  ROS_INFO("move e(go to m) was published");
+	  ROS_INFO("move e(go to m) was publishe");
+	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
@@ -249,6 +249,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_e);	    
 	  ROS_INFO("move e  (go to e)was published");
+	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
@@ -263,11 +264,13 @@ namespace Ros_to_Mtsa{
       }else if(com == 1){
 	//西へ移動
 	printf("command move w is received!\n");
+	pos_b = pos;
 	if(pos == 1){
 	  ros::Rate r(1);
 	  r.sleep();
 	  goal_pub.publish(goal_w);
 	  ROS_INFO("move w  was published");
+	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
@@ -278,6 +281,7 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move w  was published");
+	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	  while(a_detect != 1 || pos_b == pos){
 	    ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
@@ -291,7 +295,7 @@ namespace Ros_to_Mtsa{
 	}
       }else if(com == 3){
 	//荷物を持つ
-	ROS_INFO_ONCE("command pickup is received!\n");
+	ROS_INFO("command pickup is received!");
 	ros::Rate r(10);
 	r.sleep();
 	msgp.data = "pick";
@@ -316,21 +320,23 @@ namespace Ros_to_Mtsa{
 	}
       }else if(com== 4){	  
 	//荷物を置く
-	ROS_INFO_ONCE("command putdown is received!\n");
+	ROS_INFO("command putdown is received!");
 	ros::Rate r(10);
 	r.sleep();
 	msgp.data = "put";
 	pickput_pub.publish(msgp);
 	ROS_INFO_ONCE("waiting pick succ/fail");
-	  time_n = clock();
-	  c_time = time_n - time;
-	  if(c_time >= 10000000){
-	    ROS_INFO("detect pick fail");
-	ros::spinOnce();
-	    break;
+	time = clock();
+	time_n = clock();
+	  while(p_detect == 0){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 10000000){
+	      ROS_INFO("detect pick fail");
+	      break;
+	    }
 	  }
-
-
 	if(p_detect == 1){
 	  com = 6;
 	  p_detect = 0;
