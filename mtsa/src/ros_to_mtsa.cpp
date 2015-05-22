@@ -45,7 +45,7 @@ namespace Ros_to_Mtsa{
     void bump_detect();
     
   public:
-    int sockfd, len, result, pos,pos_b,p_detect,a_detect,com;
+    int sockfd, len, result, pos,pos_b,p_detect,a_detect,com,vel;
     clock_t time,time_n,c_time;
     struct sockaddr_in address;
 
@@ -72,7 +72,13 @@ namespace Ros_to_Mtsa{
       address.sin_addr.s_addr = inet_addr("136.187.81.230");
       address.sin_port = htons(9999);
       len = sizeof(address);
-      
+
+      struct timeval tv;
+
+      tv.tv_sec = 5;
+      tv.tv_usec = 0;
+      setsockopt(sockfd, SOL_SOCKET,SO_RCVTIMEO,(char *)&tv,sizeof(tv));
+
       /*connect client and server socket*/
       result = connect(sockfd, (struct sockaddr *)&address, len);
       if(result == -1) ERROR("oops : client1");
@@ -81,7 +87,7 @@ namespace Ros_to_Mtsa{
       //goal east
       goal_e.header.frame_id = "map";
       goal_e.pose.position.x = 5.0;
-      goal_e.pose.position.y = 3.5;
+      goal_e.pose.position.y = 0.5;
       goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
       
       //goal west
@@ -93,7 +99,7 @@ namespace Ros_to_Mtsa{
       //goal middle
       goal_m.header.frame_id = "map";
       goal_m.pose.position.x = 3.0;
-      goal_m.pose.position.y = 2.0;
+      goal_m.pose.position.y = 0.5;
       goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
 
@@ -156,7 +162,13 @@ namespace Ros_to_Mtsa{
        twist.angular.z == 0.0        
        ){
       ROS_INFO("arrive!");
-      a_detect = 1;
+      if(vel == 0){
+	vel = 1;
+      }else if (vel == 1){
+	a_detect = 1;
+      }else{
+	vel = 0;
+      }
     }
     //    ROS_INFO("vel_callback out!");
   }
@@ -199,7 +211,6 @@ namespace Ros_to_Mtsa{
     subscriber_init();
 
     pos = 0;
-
     ros::Rate r(1);
     r.sleep();
 
@@ -209,7 +220,7 @@ namespace Ros_to_Mtsa{
       write(sockfd, &com, 1);
 
 
-      printf("server waiting\n");
+      ROS_INFO("server waiting\n");
       /*become being able to weite or read thorough client_sockfd*/ 
      read(sockfd, &com,1);
 
@@ -217,9 +228,10 @@ namespace Ros_to_Mtsa{
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
       a_detect = 0;
-      printf("command [%d] is received!\n", com);
+      vel = 0;
+      ROS_INFO("command [%d] is received!", com);
       com = com-48;
-      printf("command [%d] is received!\n", com);
+      ROS_INFO("command [%d] is received!", com);
 
       /*
 	received command number is related to Controllable action
@@ -239,20 +251,46 @@ namespace Ros_to_Mtsa{
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move e(go to m) was publishe");
 	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  while(a_detect != 1 || pos_b == pos){
-	    ros::spinOnce();
+	  //	  while(a_detect != 1 || pos_b == pos){
+	  //ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
+	  //}
+	  time = clock();
+	  time_n = clock();
+	  while(a_detect != 1){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 25000000){
+	      ROS_INFO("detect pick fail");
+	      break;
+	    }
+	    if(vel == 1){
+	      ros::Rate r(0.5);
+	      r.sleep();
+	    }
 	  }
 	  arrive_detect();
 	}else if(pos ==1){
 	  ros::Rate r(1);
 	  r.sleep();
 	  goal_pub.publish(goal_e);	    
-	  ROS_INFO("move e  (go to e)was published");
+	  ROS_INFO("move e  (go to e)was pubished");
 	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  while(a_detect != 1 || pos_b == pos){
+	  time = clock();
+	  time_n = clock();
+	  while(a_detect != 1){
 	    ros::spinOnce();
-	    //	    ROS_INFO("pos; %d", pos);
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 25000000){
+	      ROS_INFO("detect pick fail");
+	      break;
+	    }
+	    if(vel == 1){
+	      ros::Rate r(0.5);
+	      r.sleep();
+	    }
 	  }
 	  arrive_detect();
 	} else if(pos ==2){
@@ -262,8 +300,8 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	}
       }else if(com == 1){
-	//西へ移動
-	printf("command move w is received!\n");
+	//move w
+	ROS_INFO("command move w is received!");
 	pos_b = pos;
 	if(pos == 1){
 	  ros::Rate r(1);
@@ -271,9 +309,25 @@ namespace Ros_to_Mtsa{
 	  goal_pub.publish(goal_w);
 	  ROS_INFO("move w  was published");
 	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  while(a_detect != 1 || pos_b == pos){
-	    ros::spinOnce();
+	  // while(a_detect != 1 || pos_b == pos){
+	    // ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
+	    //	  }
+	  time = clock();
+	  time_n = clock();
+	  while(a_detect != 1){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 25000000){
+	      ROS_INFO("detect pick fail");
+	      break;
+	    }
+
+	    if(vel == 1){
+	      ros::Rate r(0.5);
+	      r.sleep();
+	    }
 	  }
 	  arrive_detect();	     
 	}else if(pos == 2){
@@ -282,9 +336,24 @@ namespace Ros_to_Mtsa{
 	  goal_pub.publish(goal_m);
 	  ROS_INFO("move w  was published");
 	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  while(a_detect != 1 || pos_b == pos){
-	    ros::spinOnce();
+	  //	  while(a_detect != 1 || pos_b == pos){
+	  //  ros::spinOnce();
 	    //	    ROS_INFO("pos; %d", pos);
+	  // }
+	  time = clock();
+	  time_n = clock();
+	  while(a_detect != 1){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 25000000){
+	      ROS_INFO("detect pick fail");
+	      break;
+	    }
+	    if(vel == 1){
+	      ros::Rate r(0.5);
+	      r.sleep();
+	    }
 	  }
 	  arrive_detect();
 	} else if(pos ==0){
@@ -294,13 +363,13 @@ namespace Ros_to_Mtsa{
 	  r.sleep();
 	}
       }else if(com == 3){
-	//荷物を持つ
+	//pickup
 	ROS_INFO("command pickup is received!");
 	ros::Rate r(10);
 	r.sleep();
 	msgp.data = "pick";
 	pickput_pub.publish(msgp);
-	ROS_INFO_ONCE("waiting pick succ/fail");
+	ROS_INFO("waiting pick succ/fail");
 	time = clock();
 	time_n = clock();
 	while(p_detect == 0){
@@ -319,13 +388,13 @@ namespace Ros_to_Mtsa{
 	  com = 5;
 	}
       }else if(com== 4){	  
-	//荷物を置く
+	//putdown
 	ROS_INFO("command putdown is received!");
 	ros::Rate r(10);
 	r.sleep();
 	msgp.data = "put";
 	pickput_pub.publish(msgp);
-	ROS_INFO_ONCE("waiting pick succ/fail");
+	ROS_INFO("waiting pick succ/fail");
 	time = clock();
 	time_n = clock();
 	  while(p_detect == 0){
@@ -344,14 +413,25 @@ namespace Ros_to_Mtsa{
 	  com = 7;
 	}
       }
-      ROS_INFO("aiueo");
-      //命令の書き込み
-      write(sockfd, &com, 2);
+      ROS_INFO("send command to enactment");
+      //write command
+      write(sockfd, &com, 1);
       //      ROS_INFO("command number %d is sent to MTSA!",com);
-      printf("server waiting\n");
-      /*become being able to weite or read thorough client_sockfd*/ 
-     read(sockfd, &com,1);
+      ROS_INFO("server waiting");
+      /*become being able to write or read thorough client_sockfd*/ 
 
+      while(1){
+	com = 9;
+	read(sockfd, &com,1);
+	if(com == 9){
+	  ROS_INFO("read error");
+	  write(sockfd, &com, 1);
+	}else{
+	  ROS_INFO("read succ");
+	  write(sockfd, &com, 1);
+	  break;
+	}
+      }
 
       /*
 	sent command number is related to Monitorable action
