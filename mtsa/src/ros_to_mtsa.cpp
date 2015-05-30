@@ -84,15 +84,16 @@ namespace Ros_to_Mtsa{
       if(result == -1) ERROR("oops : client1");
 
       ROS_INFO("goal initialize");
-      //goal east
-      goal_e.header.frame_id = "map";
-      goal_e.pose.position.x = 5.0;
+      //goal for 1207 
+     //goal east
+            goal_e.header.frame_id = "map";
+       goal_e.pose.position.x = 5.0;
       goal_e.pose.position.y = 0.5;
       goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
       
       //goal west
       goal_w.header.frame_id = "map";
-      goal_w.pose.position.x = 1.0;
+      goal_w.pose.position.x = 0.0;
       goal_w.pose.position.y = 0.5;
       goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
@@ -101,6 +102,25 @@ namespace Ros_to_Mtsa{
       goal_m.pose.position.x = 3.0;
       goal_m.pose.position.y = 0.5;
       goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+      //goal for demonstration
+      //goal east
+      //goal_e.header.frame_id = "map";
+      //goal_e.pose.position.x = 0.0;
+      //goal_e.pose.position.y = -2.0;
+      //goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+      
+      //goal west
+      //goal_w.header.frame_id = "map";
+      //goal_w.pose.position.x = 0.0;
+      //goal_w.pose.position.y = 0.0;
+      //goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+      //goal middle
+      //goal_m.header.frame_id = "map";
+      //goal_m.pose.position.x = 0.0;
+      //goal_m.pose.position.y = -1.0;
+      //goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
 
 
@@ -164,8 +184,10 @@ namespace Ros_to_Mtsa{
       ROS_INFO("arrive!");
       if(vel == 0){
 	vel = 1;
+	ROS_INFO("stop1");
       }else if (vel == 1){
 	a_detect = 1;
+	ROS_INFO("stop2");
       }else{
 	vel = 0;
       }
@@ -219,19 +241,37 @@ namespace Ros_to_Mtsa{
       ROS_INFO("send: arrive w");
       write(sockfd, &com, 1);
 
+      //     ros::Rate beg(0.15);
+      // beg.sleep();
 
       ROS_INFO("server waiting\n");
       /*become being able to weite or read thorough client_sockfd*/ 
-     read(sockfd, &com,1);
+  
+	read(sockfd, &com,1);
+
+      // while(1){
+      //	com = 9;
+      //	read(sockfd, &com,1);
+      //	if(com == 9){
+      //	  	  ROS_INFO("read error");
+      //	   write(sockfd, &com, 1);
+      //	   //	  	read(sockfd, &com,1);
+      //	}else{
+      //	  	  ROS_INFO("read succ");
+      //	   write(sockfd, &com, 1);
+      //	  break;
+      //	}
+      //      }
 
   
     while(1){
       //   printf("Kobuki is at position %d !\n", pos);
       a_detect = 0;
+      p_detect = 0;
       vel = 0;
       ROS_INFO("command [%d] is received!", com);
-      com = com-48;
-      ROS_INFO("command [%d] is received!", com);
+      //      com = com-48;
+      // ROS_INFO("command [%d] is received!", com);
 
       /*
 	received command number is related to Controllable action
@@ -257,6 +297,11 @@ namespace Ros_to_Mtsa{
 	  //}
 	  time = clock();
 	  time_n = clock();
+
+	  //for offline test
+	  //a_detect = 1;
+	  //pos = 1;
+
 	  while(a_detect != 1){
 	    ros::spinOnce();
 	    time_n = clock();
@@ -279,6 +324,12 @@ namespace Ros_to_Mtsa{
 	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	  time = clock();
 	  time_n = clock();
+
+	  //for offline test
+	  //a_detect = 1;
+	  //pos = 2;
+
+
 	  while(a_detect != 1){
 	    ros::spinOnce();
 	    time_n = clock();
@@ -315,6 +366,12 @@ namespace Ros_to_Mtsa{
 	    //	  }
 	  time = clock();
 	  time_n = clock();
+
+	  //for offline test
+	  //a_detect = 1;
+	  //pos = 0;
+
+
 	  while(a_detect != 1){
 	    ros::spinOnce();
 	    time_n = clock();
@@ -342,6 +399,12 @@ namespace Ros_to_Mtsa{
 	  // }
 	  time = clock();
 	  time_n = clock();
+
+	  //for offline test
+	  //a_detect = 1;
+	  //pos = 1;
+
+
 	  while(a_detect != 1){
 	    ros::spinOnce();
 	    time_n = clock();
@@ -372,6 +435,11 @@ namespace Ros_to_Mtsa{
 	ROS_INFO("waiting pick succ/fail");
 	time = clock();
 	time_n = clock();
+
+	//for test
+	//p_detect =1;
+	  
+
 	while(p_detect == 0){
 	  ros::spinOnce();
 	  time_n = clock();
@@ -394,9 +462,12 @@ namespace Ros_to_Mtsa{
 	r.sleep();
 	msgp.data = "put";
 	pickput_pub.publish(msgp);
-	ROS_INFO("waiting pick succ/fail");
+	ROS_INFO("waiting pick succ/fail;%d",p_detect);
 	time = clock();
 	time_n = clock();
+
+	//for test
+	//p_detect =1;
 	  while(p_detect == 0){
 	    ros::spinOnce();
 	    time_n = clock();
@@ -413,25 +484,37 @@ namespace Ros_to_Mtsa{
 	  com = 7;
 	}
       }
-      ROS_INFO("send command to enactment");
-      //write command
-      write(sockfd, &com, 1);
-      //      ROS_INFO("command number %d is sent to MTSA!",com);
+
+      if (com >= 1){
+	ROS_INFO("send command to enactment:%d", com );
+	//write command
+	write(sockfd, &com, 1);
+      }
+      //write(sockfd, &com, 1);
+      //ROS_INFO("command number %d is sent to MTSA!",com);
       ROS_INFO("server waiting");
       /*become being able to write or read thorough client_sockfd*/ 
 
-      while(1){
-	com = 9;
-	read(sockfd, &com,1);
-	if(com == 9){
-	  ROS_INFO("read error");
-	  write(sockfd, &com, 1);
-	}else{
-	  ROS_INFO("read succ");
-	  write(sockfd, &com, 1);
-	  break;
-	}
-      }
+
+      //ros::Rate r(1);
+      //r.sleep();
+    com = 0;
+    ROS_INFO("com b : %d",com);
+      read(sockfd, &com,1);
+    ROS_INFO("com a : %d",com);
+      //     while(1){
+      //	com = 9;
+      //	read(sockfd, &com,1);
+      //	if(com == 9){
+      //	   ROS_INFO("read error");
+      //	   write(sockfd, &com, 1);
+      //	   //read(sockfd, &com,1);
+      //	}else{
+      //	  	  ROS_INFO("read succ");
+      //	  write(sockfd, 0, 1);
+      //	  break;
+      //	}
+      //      }
 
       /*
 	sent command number is related to Monitorable action
