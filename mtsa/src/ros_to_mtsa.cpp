@@ -69,7 +69,7 @@ namespace Ros_to_Mtsa{
       
       /*name the scket same as server socket*/
       address.sin_family = AF_INET;
-      address.sin_addr.s_addr = inet_addr("136.187.81.230");
+      address.sin_addr.s_addr = inet_addr("136.187.83.79");
       address.sin_port = htons(9999);
       len = sizeof(address);
 
@@ -86,41 +86,41 @@ namespace Ros_to_Mtsa{
       ROS_INFO("goal initialize");
       //goal for 1207 
      //goal east
-            goal_e.header.frame_id = "map";
-       goal_e.pose.position.x = 5.0;
-      goal_e.pose.position.y = 0.5;
-      goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-      
-      //goal west
-      goal_w.header.frame_id = "map";
-      goal_w.pose.position.x = 0.0;
-      goal_w.pose.position.y = 0.5;
-      goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-      //goal middle
-      goal_m.header.frame_id = "map";
-      goal_m.pose.position.x = 3.0;
-      goal_m.pose.position.y = 0.5;
-      goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-      //goal for demonstration
-      //goal east
-      //goal_e.header.frame_id = "map";
-      //goal_e.pose.position.x = 0.0;
-      //goal_e.pose.position.y = -2.0;
+      //            goal_e.header.frame_id = "map";
+      // goal_e.pose.position.x = 5.0;
+      //goal_e.pose.position.y = 0.5;
       //goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
       
       //goal west
       //goal_w.header.frame_id = "map";
       //goal_w.pose.position.x = 0.0;
-      //goal_w.pose.position.y = 0.0;
+      //goal_w.pose.position.y = 0.5;
       //goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
       //goal middle
       //goal_m.header.frame_id = "map";
-      //goal_m.pose.position.x = 0.0;
-      //goal_m.pose.position.y = -1.0;
+      //goal_m.pose.position.x = 3.0;
+      //goal_m.pose.position.y = 0.5;
       //goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+      //goal for demonstration
+      //goal east
+      goal_e.header.frame_id = "map";
+      goal_e.pose.position.x = 0.0;
+      goal_e.pose.position.y = -4.6;
+      goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+      
+      //goal west
+      goal_w.header.frame_id = "map";
+      goal_w.pose.position.x = 0.0;
+      goal_w.pose.position.y = 0.0;
+      goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+      //goal middle
+      goal_m.header.frame_id = "map";
+      goal_m.pose.position.x = 0.0;
+      goal_m.pose.position.y = -2.3;
+      goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
 
 
@@ -163,7 +163,6 @@ namespace Ros_to_Mtsa{
       sound.value= 6;
       sound_pub.publish(sound);
       p_detect   = 1;
-
       
     }
         ROS_INFO("bump_callback out!");
@@ -181,19 +180,20 @@ namespace Ros_to_Mtsa{
        twist.angular.y == 0.0 &&       
        twist.angular.z == 0.0        
        ){
-      ROS_INFO("arrive!");
       if(vel == 0){
 	vel = 1;
-	ROS_INFO("stop1");
+	ROS_INFO("1st stop");
       }else if (vel == 1){
 	a_detect = 1;
-	ROS_INFO("stop2");
-      }else{
-	vel = 0;
+	ROS_INFO("2nd stop");
       }
+    }else{
+      vel = 0;
     }
-    //    ROS_INFO("vel_callback out!");
   }
+
+
+
 
 
   void ROSToMTSA::subscriber_init(){
@@ -233,7 +233,7 @@ namespace Ros_to_Mtsa{
     subscriber_init();
 
     pos = 0;
-    ros::Rate r(1);
+    ros::Rate r(0.1);
     r.sleep();
 
     //    com = 3;
