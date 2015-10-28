@@ -107,8 +107,8 @@ include_directories(
 ## Declare a cpp executable
 # add_executable(kivamtsa_node src/kivamtsa_node.cpp)
  add_executable(kiva_to_mtsa src/kiva_to_mtsa.cpp)
- add_executable(bump src/bump.cpp)
- add_executable(goal_arrive src/goal_arrive.cpp)
+ add_executable(bump_kiva src/bump.cpp)
+ add_executable(goal_arrive_kiva src/goal_arrive.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(kivamtsa_node kivamtsa_generate_messages_cpp)
@@ -120,10 +120,10 @@ include_directories(
  target_link_libraries(kiva_to_mtsa
    ${catkin_LIBRARIES}
  )
- target_link_libraries(goal_arrive
+ target_link_libraries(goal_arrive_kiva
    ${catkin_LIBRARIES}
  )
- target_link_libraries(bump
+ target_link_libraries(bump_kiva
    ${catkin_LIBRARIES}
  )
 
