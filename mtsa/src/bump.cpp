@@ -58,18 +58,36 @@ namespace ROS_to_MTSA{
       //sound publish for kobuki
       ros::Rate r(1);
       r.sleep();
-      sound.value= 5;
+      sound.value= 0;
       sound_pub.publish(sound);
-      pickput_detect = 1;
+      pickput_detect = 1;//?
     }else if(msg.data == "put"){
       ROS_INFO("putdown!");
       //sound publish for kobuki
       ros::Rate r(1);
       r.sleep();
-      sound.value= 0;
+      sound.value= 1;
       sound_pub.publish(sound);
       pickput_detect = 2;
+    }else if(msg.data == "red"){
+      ROS_INFO("pick red!");
+      //sound publish for kobuki
+      ros::Rate r(1);
+      r.sleep();
+      sound.value= 5;
+      sound_pub.publish(sound);
+      pickput_detect = 3;
+    }else if(msg.data == "yellow"){
+      ROS_INFO("pick yellow!");
+      //sound publish for kobuki
+      ros::Rate r(1);
+      r.sleep();
+      sound.value= 6;
+      sound_pub.publish(sound);
+      pickput_detect = 4;
     }
+
+
   }
 
   void BumperToMTSA::bumper_callback(const kobuki_msgs::BumperEvent::ConstPtr msg){

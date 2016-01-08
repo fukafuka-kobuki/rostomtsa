@@ -9,7 +9,21 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nodelet
   tf
-)
+  actionlib
+  move_base_msgs
+  nodelet
+  pcl_ros
+  visualization_msgs
+  turtlebot_msgs
+  dynamic_reconfigure
+ )
+
+
+
+find_package(catkin REQUIRED COMPONENTS nodelet pcl_ros roscpp visualization_msgs turtlebot_msgs dynamic_reconfigure)
+find_package(Boost REQUIRED)
+find_package(PCL 1.7 REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -112,7 +126,7 @@ include_directories(
  add_executable(sound_control src/control_sound.cpp)
  add_executable(goal_arrive src/goal_arrive.cpp)
  add_executable(ros_to_mtsa src/ros_to_mtsa.cpp)
-
+ add_executable(detector src/detector.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -142,6 +156,9 @@ target_link_libraries(goal_arrive
   ${catkin_LIBRARIES}
 )
 target_link_libraries(ros_to_mtsa
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(detector
   ${catkin_LIBRARIES}
 )
 

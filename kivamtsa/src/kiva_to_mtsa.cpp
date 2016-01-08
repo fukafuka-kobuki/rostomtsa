@@ -35,39 +35,34 @@ namespace Kiva_to_Mtsa{
     ros::Subscriber arrive_sub;
     ros::Subscriber bump_sub;
     ros::Subscriber vel_sub;
+    ros::Subscriber detector_sub;
 
     void subscriber_init();
     void publisher_init();
     void arrive_callback(const std_msgs::String msg);
     void bump_callback(const std_msgs::String msg);
+    void detector_callback(const std_msgs::String msg);
     void vel_callback(const geometry_msgs::Twist twist);
     void arrive_detect();
     void bump_detect();
     
   public:
-    int sockfd, len, result, pos,pos_b,p_detect,a_detect,com,vel,shelfx,shelfy;
+    int sockfd, len, result, pos,pos_b,p_detect,a_detect,com,vel, detect_flag;
     clock_t time,time_n,c_time;
     struct sockaddr_in address;
 
     std_msgs::String msgp;
     std::stringstream ss;
-    geometry_msgs::PoseStamped goal_shelf;
-    geometry_msgs::PoseStamped goal_s0;
-    geometry_msgs::PoseStamped goal_s1;
-    geometry_msgs::PoseStamped goal_w;
-    geometry_msgs::PoseStamped goal_d0; 
-    geometry_msgs::PoseStamped goal_d1;
+    geometry_msgs::PoseStamped goal;
     kobuki_msgs::Sound sound;      
 
     KIVAToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
     {
-      ROS_INFO("ROSToMTSA constructer in");
+      ROS_INFO("KIVAToMTSA constructer in");
 
       //initialize variables
       com=3, p_detect= 0, a_detect = 0;
-      shelfx = 0;
-      shelfy = 0;
 
       /*create socket for client*/
       sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -91,41 +86,14 @@ namespace Kiva_to_Mtsa{
       ROS_INFO("goal initialize");
 
       //goal for demonstration
-      //goal shelf
-      goal_shelf.header.frame_id = "map";
-      goal_shelf.pose.position.x = 0.0;
-      goal_shelf.pose.position.y = -4.6;
-      goal_shelf.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-      
-      //goal west
-      goal_w.header.frame_id = "map";
-      goal_w.pose.position.x = 0.0;
-      goal_w.pose.position.y = 0.0;
-      goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
+      //goal east
       //goal middle
-      goal_s0.header.frame_id = "map";
-      goal_s0.pose.position.x = 0.0;
-      goal_s0.pose.position.y = -2.3;
-      goal_s0.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);      
+      goal.header.frame_id = "map";
+      goal.pose.position.x = 0.0;
+      goal.pose.position.y = 0.0;
+      goal.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
-      //goal middle
-      goal_s1.header.frame_id = "map";
-      goal_s1.pose.position.x = 0.0;
-      goal_s1.pose.position.y = -2.3;
-      goal_s1.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
-      //goal dock no.0 仮
-      goal_d0.header.frame_id = "map";
-      goal_d0.pose.position.x = 0.0;
-      goal_d0.pose.position.y = -2.3;
-      goal_d0.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-     //goal dock no.1 仮
-      goal_d1.header.frame_id = "map";
-      goal_d1.pose.position.x = 0.0;
-      goal_d1.pose.position.y = -2.3;
-      goal_d1.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
       ROS_INFO("ROSToMTSA constructer out");
     }
@@ -134,6 +102,7 @@ namespace Kiva_to_Mtsa{
     ros::NodeHandle private_nh;
     
     void run();
+    
   };
   
   
@@ -156,7 +125,6 @@ namespace Kiva_to_Mtsa{
   void KIVAToMTSA::bump_callback(const std_msgs::String msg)
   {
     //detect bumper was kicked reasoning the topic pubrished by "bump_to_mtsa"
-
     ROS_INFO("bump_callback in!");
     if(msg.data == "b"){
       ROS_INFO("bump!");
@@ -166,7 +134,7 @@ namespace Kiva_to_Mtsa{
       sound_pub.publish(sound);
       p_detect   = 1;
       
-    } 
+    }
         ROS_INFO("bump_callback out!");
   }
 
@@ -195,6 +163,18 @@ namespace Kiva_to_Mtsa{
   }
 
 
+  void KIVAToMTSA::detector_callback(const std_msgs::String msg){
+    ROS_INFO("detector_callback in!");
+    if(msg.data == "d"){
+      ROS_INFO("detect object!");
+      ros::Rate r(1);
+      r.sleep();
+      detect_flag = 1;      
+    }else{
+      detect_flag = 0;      
+    }
+    ROS_INFO("bump_callback out!");
+  }
 
 
 
@@ -202,6 +182,7 @@ namespace Kiva_to_Mtsa{
     ROS_INFO("subscriber_init");  
     arrive_sub = nh.subscribe("arrive",1000,&KIVAToMTSA::arrive_callback,this);
     bump_sub = nh.subscribe("bump",1000,&KIVAToMTSA::bump_callback,this);
+    detector_sub = nh.subscribe("detect",1000,&KIVAToMTSA::detector_callback,this);
     vel_sub = nh.subscribe<geometry_msgs::Twist>("/navigation_velocity_smoother/raw_cmd_vel",10,&KIVAToMTSA::vel_callback,this);
   }
 
@@ -238,117 +219,86 @@ namespace Kiva_to_Mtsa{
     ros::Rate r(0.1);
     r.sleep();
 
+    //    com = 3;
+    // write(sockfd, &com, 1);
       ROS_INFO("send: arrive w");
       write(sockfd, &com, 1);
 
+      //     ros::Rate beg(0.15);
+      // beg.sleep();
+
       ROS_INFO("server waiting\n");
-      /*become being able to weite or read thorough client_sockfd*/   
+      /*become being able to weite or read thorough client_sockfd*/ 
+  
 	read(sockfd, &com,1);
+
+
   
     while(1){
-      a_detect = 0;p_detect = 0; vel = 0;
+      //   printf("Kobuki is at position %d !\n", pos);
+      a_detect = 0;
+      p_detect = 0;
+      vel = 0;
       ROS_INFO("command [%d] is received!", com);
+      //      com = com-48;
+      // ROS_INFO("command [%d] is received!", com);
+
       /*
 	received command number is related to Controllable action
-	1:move shelf
-	2:move dock
-	3;move station
-	4:pick
-	5:put
+	1:move e
+	2:move w
+	3:move s
+	4:move n
+	5:pickup
+	6:putdown
+	7:wait
        */
 
-      if(com == 2){
-	ROS_INFO("command move dock is received!\n");
-	// move dock;受け取ったら、行き先のdock番号をreceiveする
-	read(sockfd, &com,1);
-	//com: receive dock number
-	if(com == 0){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_d0);
-	  ROS_INFO("move dock no.0  was published");
-	}else if(com == 1){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_d1);
-	  ROS_INFO("move dock no.1  was published");
+      if(com <= 1 && com >= 4){
+	ROS_INFO("command move is received!\n");
+	pos_b = pos;
+	if (com == 1){
+	  goal.pose.position.x  += 2.0;
+	  ROS_INFO("move e");
+	}else if (com == 2){
+	  goal.pose.position.x  -= 2.0;
+	  ROS_INFO("move w");
+	}else if (com == 3){
+	  goal.pose.position.y  -= 2.0;
+	  ROS_INFO("move n");
+	}else if (com == 4){
+	  goal.pose.position.y  += 2.0;
+	  ROS_INFO("move s");
 	}
-	  time = clock();
-	  time_n = clock();
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
-	    if(c_time >= 25000000){
-	      break;
-	    }
-	    if(vel == 1){
-	      ros::Rate r(0.5);
-	      r.sleep();
-	    }
-	  }
-	  arrive_detect();
-      }else if(com == 1){
-	//move shelf
-	ROS_INFO("command move shelf is received!");
-	read(sockfd, &shelfx,1);	
-	read(sockfd, &shelfy,1);
-	goal_shelf.pose.position.x = shelfx;
-	goal_shelf.pose.position.y = shelfy;
-	ros::Rate r(1); 
-	r.sleep();
-	goal_pub.publish(goal_shelf);
-	ROS_INFO("move to shelf  was published");
-	time = clock();
+	if(detect_flag ==0){
+	  goal_pub.publish(goal);
+	}else if(detect_flag == 1){
+	  break;
+	} 
+	ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
+ 	time = clock();
 	time_n = clock();
+	//for offline test
+	//a_detect = 1;
+	//pos = 1;
+      	ROS_INFO("waiting arrive event");
 	while(a_detect != 1){
 	  ros::spinOnce();
 	  time_n = clock();
 	  c_time = time_n - time;
-	  if(c_time >= 25000000){
-	    ROS_INFO("detect pick fail");
-	    break;
-	  }
-	  if(vel == 1){
-	      ros::Rate r(0.5);
-	      r.sleep();
-	  }
-	}
-	arrive_detect();	     
-      } else if(com == 3){
-	ROS_INFO("command move Station is received!\n");
-	// move station;受け取ったら、行き先のstation番号をreceiveする
-	read(sockfd, &com,1);
-	//com: receive station number
-	if(com == 0){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_s0);
-	  ROS_INFO("move station no.0  was published");
-	}else if(com == 1){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_d1);
-	  ROS_INFO("move station no.1  was published");
-	}
-	  time = clock();
-	  time_n = clock();
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
 	    if(c_time >= 25000000){
+	      ROS_INFO("time out");
 	      break;
 	    }
 	    if(vel == 1){
 	      ros::Rate r(0.5);
 	      r.sleep();
 	    }
-	  }
-	  arrive_detect();
-      }else if(com == 4){
+	}
+	arrive_detect();	
+      }else if(com == 5){
 	//pickup
-	ROS_INFO("command pick is received!");
+	ROS_INFO("command pickup is received!");
 	ros::Rate r(10);
 	r.sleep();
 	msgp.data = "pick";
@@ -356,7 +306,10 @@ namespace Kiva_to_Mtsa{
 	ROS_INFO("waiting pick succ/fail");
 	time = clock();
 	time_n = clock();
-	while(p_detect == 0){
+
+	//for test
+	//p_detect =1;
+      	while(p_detect == 0){
 	  ros::spinOnce();
 	  time_n = clock();
 	  c_time = time_n - time;
@@ -371,7 +324,7 @@ namespace Kiva_to_Mtsa{
 	}else if(p_detect == 0){
 	  com = 5;
 	}
-      }else if(com== 5){	  
+      }else if(com== 6){	  
 	//putdown
 	ROS_INFO("command putdown is received!");
 	ros::Rate r(10);
@@ -398,21 +351,56 @@ namespace Kiva_to_Mtsa{
 	  p_detect = 0;
 	}else if(p_detect == 0){
 	  com = 7;
-	}       
+	}
+       
+      }else if(com == 7){
+	//pick red
+	ROS_INFO("command pick red is received!");
+	ros::Rate r(10);
+	r.sleep();
+	msgp.data = "red";
+	pickput_pub.publish(msgp);
+	ROS_INFO("waiting pick red succ/fail;%d",p_detect);
+	time = clock();
+	time_n = clock();
+
+	//for test
+	//p_detect =1;
+	  while(p_detect == 0){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 10000000){
+	      ROS_INFO("detect pick red  fail");
+	      break;
+	    }
+	  }
+	if(p_detect == 1){
+	  com = 8;
+	  p_detect = 0;
+	}else if(p_detect == 0){
+	  com = 9;
+	}
       }
-      
+
+      //      com =2;
       if (com >= 1){
 	ROS_INFO("send command to enactment:%d", com );
 	//write command
 	write(sockfd, &com, 1);
       }
+      //write(sockfd, &com, 1);
+      //ROS_INFO("command number %d is sent to MTSA!",com);
       ROS_INFO("server waiting");
       /*become being able to write or read thorough client_sockfd*/ 
 
-      com = 0;
-      ROS_INFO("com b : %d",com);
+
+      //ros::Rate r(1);
+      //r.sleep();
+    com = 0;
+    ROS_INFO("com b : %d",com);
       read(sockfd, &com,1);
-      ROS_INFO("com a : %d",com);
+    ROS_INFO("com a : %d",com);
 
       /*
 	sent command number is related to Monitorable action
@@ -433,10 +421,10 @@ namespace Kiva_to_Mtsa{
 
   
 int main(int argc,char** argv){
-  ros::init(argc,argv,"kiva_to_MTSA");
+  ros::init(argc,argv,"ros_to_MTSA");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
-  Kiva_to_Mtsa::KIVAToMTSA ktm(nh,nh_private);
-  ktm.run();
+  Kiva_to_Mtsa::KIVAToMTSA rtm(nh,nh_private);
+  rtm.run();
   ros::spin();
 }

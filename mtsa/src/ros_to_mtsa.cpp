@@ -69,7 +69,7 @@ namespace Ros_to_Mtsa{
       
       /*name the scket same as server socket*/
       address.sin_family = AF_INET;
-      address.sin_addr.s_addr = inet_addr("136.187.83.79");
+      address.sin_addr.s_addr = inet_addr("136.187.83.40");
       address.sin_port = htons(9999);
       len = sizeof(address);
 
@@ -84,24 +84,6 @@ namespace Ros_to_Mtsa{
       if(result == -1) ERROR("oops : client1");
 
       ROS_INFO("goal initialize");
-      //goal for 1207 
-     //goal east
-      //            goal_e.header.frame_id = "map";
-      // goal_e.pose.position.x = 5.0;
-      //goal_e.pose.position.y = 0.5;
-      //goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-      
-      //goal west
-      //goal_w.header.frame_id = "map";
-      //goal_w.pose.position.x = 0.0;
-      //goal_w.pose.position.y = 0.5;
-      //goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-      //goal middle
-      //goal_m.header.frame_id = "map";
-      //goal_m.pose.position.x = 3.0;
-      //goal_m.pose.position.y = 0.5;
-      //goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
       //goal for demonstration
       //goal east
@@ -249,19 +231,6 @@ namespace Ros_to_Mtsa{
   
 	read(sockfd, &com,1);
 
-      // while(1){
-      //	com = 9;
-      //	read(sockfd, &com,1);
-      //	if(com == 9){
-      //	  	  ROS_INFO("read error");
-      //	   write(sockfd, &com, 1);
-      //	   //	  	read(sockfd, &com,1);
-      //	}else{
-      //	  	  ROS_INFO("read succ");
-      //	   write(sockfd, &com, 1);
-      //	  break;
-      //	}
-      //      }
 
   
     while(1){
@@ -483,8 +452,66 @@ namespace Ros_to_Mtsa{
 	}else if(p_detect == 0){
 	  com = 7;
 	}
+       
+      }else if(com == 5){
+	//pick red
+	ROS_INFO("command pick red is received!");
+	ros::Rate r(10);
+	r.sleep();
+	msgp.data = "red";
+	pickput_pub.publish(msgp);
+	ROS_INFO("waiting pick red succ/fail;%d",p_detect);
+	time = clock();
+	time_n = clock();
+
+	//for test
+	//p_detect =1;
+	  while(p_detect == 0){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 10000000){
+	      ROS_INFO("detect pick red  fail");
+	      break;
+	    }
+	  }
+	if(p_detect == 1){
+	  com = 8;
+	  p_detect = 0;
+	}else if(p_detect == 0){
+	  com = 9;
+	}
+      }else if(com == 6){
+	//pick yellow
+	ROS_INFO("command pick yellow is received!");
+	ros::Rate r(10);
+	r.sleep();
+	msgp.data = "yellow";
+	pickput_pub.publish(msgp);
+	ROS_INFO("waiting pick yellow succ/fail;%d",p_detect);
+	time = clock();
+	time_n = clock();
+
+	//for test
+	//p_detect =1;
+	  while(p_detect == 0){
+	    ros::spinOnce();
+	    time_n = clock();
+	    c_time = time_n - time;
+	    if(c_time >= 10000000){
+	      ROS_INFO("detect pick yellow fail");
+	      break;
+	    }
+	  }
+	if(p_detect == 1){
+	  com = 8;
+	  p_detect = 0;
+	}else if(p_detect == 0){
+	  com = 9;
+	}
       }
 
+      //      com =2;
       if (com >= 1){
 	ROS_INFO("send command to enactment:%d", com );
 	//write command
@@ -502,19 +529,6 @@ namespace Ros_to_Mtsa{
     ROS_INFO("com b : %d",com);
       read(sockfd, &com,1);
     ROS_INFO("com a : %d",com);
-      //     while(1){
-      //	com = 9;
-      //	read(sockfd, &com,1);
-      //	if(com == 9){
-      //	   ROS_INFO("read error");
-      //	   write(sockfd, &com, 1);
-      //	   //read(sockfd, &com,1);
-      //	}else{
-      //	  	  ROS_INFO("read succ");
-      //	  write(sockfd, 0, 1);
-      //	  break;
-      //	}
-      //      }
 
       /*
 	sent command number is related to Monitorable action
