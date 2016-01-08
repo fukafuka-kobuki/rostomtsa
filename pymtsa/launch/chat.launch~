@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="pymtsa" name="talker" type="talker.py"/>
+	<node pkg="pymtsa" name="listener" type="listener.py"/>
+</launch>
