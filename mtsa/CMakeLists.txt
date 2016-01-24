@@ -127,6 +127,7 @@ include_directories(
  add_executable(goal_arrive src/goal_arrive.cpp)
  add_executable(ros_to_mtsa src/ros_to_mtsa.cpp)
  add_executable(detector src/detector.cpp)
+ add_executable(ros_for_learnning src/ros_for_learnning.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -161,7 +162,9 @@ target_link_libraries(ros_to_mtsa
 target_link_libraries(detector
   ${catkin_LIBRARIES}
 )
-
+target_link_libraries(ros_for_learnning
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

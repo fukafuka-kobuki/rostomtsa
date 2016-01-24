@@ -26,8 +26,8 @@
 
 
 
-namespace Ros_to_Mtsa{
-  class ROSToMTSA{
+namespace Ros_to_Learnning{
+  class ROSToLEARNNING{
   private:
     ros::Publisher pickput_pub;
     ros::Publisher goal_pub;
@@ -51,15 +51,13 @@ namespace Ros_to_Mtsa{
 
     std_msgs::String msgp;
     std::stringstream ss;
-    geometry_msgs::PoseStamped goal_e;
-    geometry_msgs::PoseStamped goal_m;
-    geometry_msgs::PoseStamped goal_w;
+    geometry_msgs::PoseStamped goal;
     kobuki_msgs::Sound sound;      
 
-    ROSToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
+    ROSToLEARNNING(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle)
       :nh(node_handle),private_nh(private_node_handle)
     {
-      ROS_INFO("ROSToMTSA constructer in");
+      ROS_INFO("ROSToLEARNNING constructer in");
 
       //initialize variables
       com=3, p_detect= 0, a_detect = 0;
@@ -87,29 +85,16 @@ namespace Ros_to_Mtsa{
       ROS_INFO("goal initialize");
 
       //goal for demonstration
-      //goal east
-      goal_e.header.frame_id = "map";
-      goal_e.pose.position.x = 0.0;
-      goal_e.pose.position.y = -4.6;
-      goal_e.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-      
-      //goal west
-      goal_w.header.frame_id = "map";
-      goal_w.pose.position.x = 0.0;
-      goal_w.pose.position.y = 0.0;
-      goal_w.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-      //goal middle
-      goal_m.header.frame_id = "map";
-      goal_m.pose.position.x = 0.0;
-      goal_m.pose.position.y = -2.3;
-      goal_m.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+      //goal base
+      goal.header.frame_id = "map";
+      goal.pose.position.x = 0.0;
+      goal.pose.position.y = 0.0;
+      goal.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
 
-
-      ROS_INFO("ROSToMTSA constructer out");
+      ROS_INFO("ROSToLEARNNING constructer out");
     }
-    ~ROSToMTSA(){}
+    ~ROSToLEARNNING(){}
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;
     
@@ -118,7 +103,7 @@ namespace Ros_to_Mtsa{
   };
   
   
-  void ROSToMTSA::arrive_callback(const std_msgs::String msg)
+  void ROSToLEARNNING::arrive_callback(const std_msgs::String msg)
   {
     //localization reasoning the topic published by "goal_arrive node"
 
@@ -134,7 +119,7 @@ namespace Ros_to_Mtsa{
     }    
   }
 
-  void ROSToMTSA::bump_callback(const std_msgs::String msg)
+  void ROSToLEARNNING::bump_callback(const std_msgs::String msg)
   {
     //detect bumper was kicked reasoning the topic pubrished by "bump_to_mtsa"
 
@@ -151,7 +136,7 @@ namespace Ros_to_Mtsa{
         ROS_INFO("bump_callback out!");
   }
 
-  void ROSToMTSA::vel_callback(const geometry_msgs::Twist twist)
+  void ROSToLEARNNING::vel_callback(const geometry_msgs::Twist twist)
   {
     //look the velocity of kobuki and detect its stopping
 
@@ -179,14 +164,14 @@ namespace Ros_to_Mtsa{
 
 
 
-  void ROSToMTSA::subscriber_init(){
+  void ROSToLEARNNING::subscriber_init(){
     ROS_INFO("subscriber_init");  
-    arrive_sub = nh.subscribe("arrive",1000,&ROSToMTSA::arrive_callback,this);
-    bump_sub = nh.subscribe("bump",1000,&ROSToMTSA::bump_callback,this);
-    vel_sub = nh.subscribe<geometry_msgs::Twist>("/navigation_velocity_smoother/raw_cmd_vel",10,&ROSToMTSA::vel_callback,this);
+    arrive_sub = nh.subscribe("arrive",1000,&ROSToLEARNNING::arrive_callback,this);
+    bump_sub = nh.subscribe("bump",1000,&ROSToLEARNNING::bump_callback,this);
+    vel_sub = nh.subscribe<geometry_msgs::Twist>("/navigation_velocity_smoother/raw_cmd_vel",10,&ROSToLEARNNING::vel_callback,this);
   }
 
-  void ROSToMTSA::publisher_init(){
+  void ROSToLEARNNING::publisher_init(){
     ROS_INFO("publisher_init");
     pickput_pub = nh.advertise<std_msgs::String>("chatter",1000);
     std::string goal_topic_name = "/move_base_simple/goal";
@@ -194,7 +179,7 @@ namespace Ros_to_Mtsa{
     sound_pub = nh.advertise<kobuki_msgs::Sound>("mobile_base/commands/sound",1);
   }
 
-  void ROSToMTSA::arrive_detect(){
+  void ROSToLEARNNING::arrive_detect(){
     ROS_INFO("arrive detect in!");
     if(pos == 0){
       ROS_INFO("arrive west");
@@ -210,7 +195,7 @@ namespace Ros_to_Mtsa{
 
 
 
-  void ROSToMTSA::run(){
+  void ROSToLEARNNING::run(){
     ROS_INFO("run");
     publisher_init();
     subscriber_init();
@@ -249,22 +234,14 @@ namespace Ros_to_Mtsa{
       com = init;
       write(sockfd, &com, 1);
 
-      //     ros::Rate beg(0.15);
-      // beg.sleep();
-
       ROS_INFO("server waiting\n");
-      /*become being able to weite or read thorough client_sockfd*/ 
-
-
-
-      //    r.sleep();
-  
+      /*become being able to weite or read thorough client_sockfd*/   
       read(sockfd, &com,1);
  
-    while(1){
-      //   printf("Kobuki is at position %d !\n", pos);
-      a_detect = 0;
-      p_detect = 0;
+      while(1){
+	//   printf("Kobuki is at position %d !\n", pos);
+	a_detect = 0;
+	p_detect = 0;
       vel = 0;
       ROS_INFO("command [%d] is received!", com);
       // ROS_INFO("command [%d] is received!", com);
@@ -276,151 +253,70 @@ namespace Ros_to_Mtsa{
 	3:pickup
 	4:putdown
        */
-
+      
       if(com == 2){
 	ROS_INFO("command move e is received!\n");
 	pos_b = pos;
 	//receive move e
-	if(pos == 0){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_m);
-	  ROS_INFO("move e(go to m) was publishe");
-	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  //	  while(a_detect != 1 || pos_b == pos){
-	  //ros::spinOnce();
-	    //	    ROS_INFO("pos; %d", pos);
-	  //}
-	  time = clock();
-	  time_n = clock();
-
+	ros::Rate r(1);
+	r.sleep();
+	goal.pose.position.y -= 2.3;
+	goal_pub.publish(goal);
+	ROS_INFO("move e was publishe");
+	ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
+	time = clock();
+	time_n = clock();	  
 	  //for offline test
 	  //a_detect = 1;
 	  //pos = 1;
-
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
-	    if(c_time >= 25000000){
-	      ROS_INFO("detect pick fail");
-	      break;
-	    }
-	    if(vel == 1){
-	      ros::Rate r(0.5);
-	      r.sleep();
-	    }
-	  }
-	  arrive_detect();
-	}else if(pos ==1){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_e);	    
-	  ROS_INFO("move e  (go to e)was pubished");
-	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  time = clock();
+	
+	while(a_detect != 1){
+	  ros::spinOnce();
 	  time_n = clock();
-
-	  //for offline test
-	  //a_detect = 1;
-	  //pos = 2;
-
-
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
-	    if(c_time >= 25000000){
-	      ROS_INFO("detect pick fail");
-	      break;
-	    }
-	    if(vel == 1){
-	      ros::Rate r(0.5);
-	      r.sleep();
-	    }
+	  c_time = time_n - time;
+	  if(c_time >= 25000000){
+	    ROS_INFO("detect pick fail");
+	    break;
+	  }	
+	  if(vel == 1){
+	    ros::Rate r(0.5);
+	    r.sleep();
 	  }
-	  arrive_detect();
-	} else if(pos ==2){
-	  ROS_INFO("kobuki is already at east");
-	  com = 1;
-	  ros::Rate r(10);
-	  r.sleep();
-	}
+	}  
+	arrive_detect();	  
       }else if(com == 1){
 	//move w
 	ROS_INFO("command move w is received!");
 	pos_b = pos;
-	if(pos == 1){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_w);
-	  ROS_INFO("move w  was published");
-	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  // while(a_detect != 1 || pos_b == pos){
-	    // ros::spinOnce();
-	    //	    ROS_INFO("pos; %d", pos);
-	    //	  }
-	  time = clock();
+	goal.pose.position.y += 2.3;	
+	ros::Rate r(1);
+	r.sleep();
+	goal_pub.publish(goal);
+	ROS_INFO("move w  was published");
+	ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
+	
+	time = clock();
+	time_n = clock();
+	  
+	//for offline test
+	//a_detect = 1;
+	//pos = 0;
+	    
+	while(a_detect != 1){
+	  ros::spinOnce();
 	  time_n = clock();
-
-	  //for offline test
-	  //a_detect = 1;
-	  //pos = 0;
-
-
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
+	  c_time = time_n - time;
 	    if(c_time >= 25000000){
 	      ROS_INFO("detect pick fail");
 	      break;
 	    }
-
+	    
 	    if(vel == 1){
 	      ros::Rate r(0.5);
 	      r.sleep();
 	    }
-	  }
-	  arrive_detect();	     
-	}else if(pos == 2){
-	  ros::Rate r(1);
-	  r.sleep();
-	  goal_pub.publish(goal_m);
-	  ROS_INFO("move w  was published");
-	  ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
-	  //	  while(a_detect != 1 || pos_b == pos){
-	  //  ros::spinOnce();
-	    //	    ROS_INFO("pos; %d", pos);
-	  // }
-	  time = clock();
-	  time_n = clock();
-
-	  //for offline test
-	  //a_detect = 1;
-	  //pos = 1;
-
-
-	  while(a_detect != 1){
-	    ros::spinOnce();
-	    time_n = clock();
-	    c_time = time_n - time;
-	    if(c_time >= 25000000){
-	      ROS_INFO("detect pick fail");
-	      break;
-	    }
-	    if(vel == 1){
-	      ros::Rate r(0.5);
-	      r.sleep();
-	    }
-	  }
-	  arrive_detect();
-	} else if(pos ==0){
-	  ROS_INFO("kobuki is already at west");
-	  com = 3;
-	  ros::Rate r(10);
-	  r.sleep();
 	}
+	arrive_detect();	     
       }else if(com == 3){
 	//pickup
 	ROS_INFO("command pickup is received!");
@@ -576,10 +472,10 @@ namespace Ros_to_Mtsa{
 
   
 int main(int argc,char** argv){
-  ros::init(argc,argv,"ros_to_MTSA");
+  ros::init(argc,argv,"ros_to_LEARNNING");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
-  Ros_to_Mtsa::ROSToMTSA rtm(nh,nh_private);
+  Ros_to_Learnning::ROSToLEARNNING rtm(nh,nh_private);
   rtm.run();
   ros::spin();
 }
