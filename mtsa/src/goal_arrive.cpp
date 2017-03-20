@@ -10,6 +10,7 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
 #include <tf/tf.h>
+#include <fstream>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include "kobuki_msgs/BumperEvent.h"
@@ -21,8 +22,8 @@
     perror(x);					\
     exit(1);					\
   }
-
-
+   char Lines[100][256];
+int w_u,w_b,e_u,e_b;
 namespace ARRIVE_to_MTSA{
   class ArriveToMTSA{
   private:
@@ -34,12 +35,14 @@ namespace ARRIVE_to_MTSA{
     void publisher_init();
   public:
     int sockfd, len, result;
+ 
     struct sockaddr_in address;
     int com,detect_arrive; 
     nav_msgs::Odometry c_odom,l_odom;
     geometry_msgs::Twist c_vel,l_vel;
     std_msgs::String arrive;
     std::stringstream ss;
+
 
     ArriveToMTSA(ros::NodeHandle node_handle,ros::NodeHandle private_node_handle )
       : nh(node_handle), private_nh(private_node_handle)
@@ -59,24 +62,26 @@ namespace ARRIVE_to_MTSA{
 
   void ArriveToMTSA::arrive_callback(const nav_msgs::Odometry msg){
     ROS_INFO("arrive_callback in");
+
+
     c_odom = msg;
     
-    if(c_odom.pose.pose.position.y < -0.8 &&
-       c_odom.pose.pose.position.y > -3.8){
+    if(c_odom.pose.pose.position.y < e_u &&
+       c_odom.pose.pose.position.y > w_b){
 				      //       c_odom.pose.pose.position.y > 1.0 && 
 	 //       c_odom.pose.pose.position.y < 3.0){
       ROS_INFO("pos m");
       arrive.data = "m";
       arrive_pub.publish(arrive);
-    }else if(c_odom.pose.pose.position.y >= -0.8 &&
-	     c_odom.pose.pose.position.y <= 0.8){
+    }else if(c_odom.pose.pose.position.y >= e_b &&
+	     c_odom.pose.pose.position.y <= e_u){
 	     //	     c_odom.pose.pose.position.y >= 0.0 && 
 	     // c_odom.pose.pose.position.y <= 1.0){
       ROS_INFO("pos w");
       arrive.data = "w";
       arrive_pub.publish(arrive);
-    }else if(c_odom.pose.pose.position.y <= -3.8 &&
-	     c_odom.pose.pose.position.y >= -5.4 ){
+    }else if(c_odom.pose.pose.position.y <= w_b &&
+	     c_odom.pose.pose.position.y >= w_u ){
 	 //	     c_odom.pose.pose.position.y >= 3.0 && 
 	 //  c_odom.pose.pose.position.y <= 4.5){
       ROS_INFO("pos e");
@@ -106,6 +111,27 @@ namespace ARRIVE_to_MTSA{
 }
 
 int main(int argc, char** argv){
+    FILE* fp;
+  fp=fopen("dest.txt","r");
+    if(fp==NULL){
+     printf("読み込み失敗\n");
+    return -1;
+  }
+  for(int i = 0;i<100&&fgets(Lines[i],sizeof(Lines[i]),fp)!=NULL; i++);
+  fclose(fp);
+
+  int e,m,w;
+  e=atoi(Lines[0]);
+  m=atoi(Lines[1]);
+  w=atoi(Lines[2]);  
+
+  int tmp;
+    tmp = (m-e)/2;
+  e_u=e+tmp;
+  e_b=e-tmp;
+  w_u=w+tmp;
+  w_b=w-tmp;
+
   ros::init(argc, argv, "arrive_to_MTSA");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");

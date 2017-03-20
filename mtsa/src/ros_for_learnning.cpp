@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <fstream>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -67,8 +68,8 @@ namespace Ros_to_Learnning{
       
       /*name the scket same as server socket*/
       address.sin_family = AF_INET;
-      address.sin_addr.s_addr = inet_addr("136.187.81.102");
-      //address.sin_addr.s_addr = inet_addr("136.187.82.237");
+      //      address.sin_addr.s_addr = inet_addr("136.187.81.102");
+      address.sin_addr.s_addr = inet_addr("136.187.81.46");
       address.sin_port = htons(9999);
       len = sizeof(address);
 
@@ -230,6 +231,12 @@ namespace Ros_to_Learnning{
       int init;
       scanf("%d",&init);
 
+      if(init == 1){
+	goal.pose.position.y = -3.0;
+      }else if(init == 2){
+	goal.pose.position.y = -1.5;
+      }
+
       ROS_INFO("initial monitorable is %d", init);
       com = init;
       write(sockfd, &com, 1);
@@ -260,9 +267,9 @@ namespace Ros_to_Learnning{
 	//receive move e
 	ros::Rate r(1);
 	r.sleep();
-	goal.pose.position.y -= 2.3;
+	goal.pose.position.y -= 1.5;
 	goal_pub.publish(goal);
-	ROS_INFO("move e was publishe");
+	ROS_INFO("move e was published");
 	ROS_INFO("a_detect = %d, pos = %d, pos_b = %d",a_detect, pos_b,pos);
 	time = clock();
 	time_n = clock();	  
@@ -288,7 +295,7 @@ namespace Ros_to_Learnning{
 	//move w
 	ROS_INFO("command move w is received!");
 	pos_b = pos;
-	goal.pose.position.y += 2.3;	
+	goal.pose.position.y += 1.5;	
 	ros::Rate r(1);
 	r.sleep();
 	goal_pub.publish(goal);
