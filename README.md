@@ -1,5 +1,5 @@
 # rostomtsa
-#Turtlebot実装引き継ぎ資料
+# Turtlebot実装引き継ぎ資料
 1.rosの導入と学習
 基本的にはrosのホームページのtutorialを行えば良い。  
  http://wiki.ros.org/ja/hydro/Installation/Ubuntu  
@@ -8,6 +8,7 @@ OSはUbuntu12.04、rosバージョンはhydro推奨。
 ROSの使い方はチュートリアル(http://wiki.ros.org/ja/ROS/Tutorials )の1, 2, 3, 4, 5, 6, 8, 9, 11,12, 13をやれば学習できると思います。それ以外は適宜必要になったらで良いと思います。
 
 2. turtlebotの利用  
+
 2.1turtlebotに必要な設定  
 条件:1が終わっていること  
 
@@ -46,7 +47,7 @@ export ROS_MASTER_URI=http://parentip:11311
 export ROS_HOSTNAME=childip  
 
 
-3.     rosの実装の導入  
+3. rosの実装の導入  
 実装したソースはgithub(https://github.com/fukafuka-kobuki)のrostomtsa内においてあるので、src内にこれを置けばmake可能。  
 ただし、kivamtsaに関してはコンパイルできないのでrmして大丈夫  
 （幾つかのPCで実装していた関係で別れたものなのでこれを残したままコンパイルするとコンフリクトします）  
