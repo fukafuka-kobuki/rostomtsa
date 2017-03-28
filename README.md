@@ -1,13 +1,13 @@
 # rostomtsa
 #Turtlebot実装引き継ぎ資料
 1.rosの導入と学習
-基本的にはrosのホームページのtutorial (http://wiki.ros.org/ja/hydro/Installation/Ubuntu)を行えば良い。
+基本的にはrosのホームページのtutorial (http://wiki.ros.org/ja/hydro/Installation/Ubuntu)を行えば良い。  
 OSはUbuntu12.04、rosバージョンはhydro推奨。
 
 Rosの使い方はチュートリアル(http://wiki.ros.org/ja/ROS/Tutorials)の1, 2, 3, 4, 5, 6, 8, 9, 11,12, 13をやれば学習できると思います。それ以外は適宜必要になったらで良いと思います。
 
-2.								      turtlebotの利用
-2.1								      turtlebotに必要な設定
+2. turtlebotの利用
+2.1turtlebotに必要な設定
 条件:1が終わっていること
 
 ・turtlebotのドライバ設定
